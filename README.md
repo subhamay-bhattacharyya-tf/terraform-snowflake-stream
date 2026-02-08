@@ -1,101 +1,90 @@
-# Terraform Snowflake Module - Warehouse
+# Terraform Snowflake Module - Stream
 
-![Release](https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse/actions/workflows/ci.yaml/badge.svg)&nbsp;![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?logo=snowflake&logoColor=white)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/73bb06aedb3721ff9a98cfe96f71647a/raw/terraform-snowflake-warehouse.json?)
+![Release](https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-stream/actions/workflows/ci.yaml/badge.svg)&nbsp;![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?logo=snowflake&logoColor=white)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-tf/terraform-snowflake-stream)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/1874e744480a2900d630c662ba60cf2e/raw/terraform-snowflake-stream.json?)
 
-A Terraform module for creating and managing Snowflake warehouses using a map of configuration objects. Supports creating single or multiple warehouses with a single module call.
+
+A Terraform module for creating and managing Snowflake streams on tables using a map of configuration objects. Supports creating single or multiple streams with a single module call.
 
 ## Features
 
-- Map-based configuration for creating single or multiple warehouses
+- Map-based configuration for creating single or multiple streams
 - Built-in input validation with descriptive error messages
 - Sensible defaults for optional properties
-- Outputs keyed by warehouse identifier for easy reference
-- Support for all Snowflake warehouse sizes and configurations
+- Outputs keyed by stream identifier for easy reference
+- Support for append-only and standard stream modes
 
 ## Usage
 
-### Single Warehouse
+### Single Stream
 
 ```hcl
-module "warehouse" {
-  source = "path/to/modules/snowflake-warehouse"
+module "stream" {
+  source = "path/to/modules/snowflake-stream"
 
-  warehouse_configs = {
-    "my_warehouse" = {
-      name                      = "MY_WAREHOUSE"
-      warehouse_size            = "X-SMALL"
-      warehouse_type            = "STANDARD"
-      auto_resume               = true
-      auto_suspend              = 60
-      initially_suspended       = true
-      min_cluster_count         = 1
-      max_cluster_count         = 1
-      scaling_policy            = "STANDARD"
-      enable_query_acceleration = false
-      comment                   = "My test warehouse"
+  stream_configs = {
+    "my_stream" = {
+      name              = "MY_STREAM"
+      database          = "MY_DATABASE"
+      schema            = "PUBLIC"
+      table             = "MY_TABLE"
+      append_only       = "false"
+      show_initial_rows = "false"
+      copy_grants       = false
+      comment           = "Stream for tracking changes on my table"
     }
   }
 }
 ```
 
-### Multiple Warehouses
+### Multiple Streams
 
 ```hcl
 locals {
-  warehouses = {
-    "adhoc_wh" = {
-      name                      = "SN_TEST_ADHOC_WH"
-      warehouse_size            = "X-SMALL"
-      warehouse_type            = "STANDARD"
-      auto_resume               = true
-      auto_suspend              = 60
-      initially_suspended       = true
-      min_cluster_count         = 1
-      max_cluster_count         = 1
-      scaling_policy            = "STANDARD"
-      enable_query_acceleration = false
-      comment                   = "Development and sandbox warehouse for ad-hoc queries"
+  streams = {
+    "orders_stream" = {
+      name              = "SN_ORDERS_STREAM"
+      database          = "SALES_DB"
+      schema            = "PUBLIC"
+      table             = "ORDERS"
+      append_only       = "false"
+      show_initial_rows = "false"
+      copy_grants       = false
+      comment           = "Stream for tracking changes on orders table"
     }
-    "load_wh" = {
-      name                      = "SN_TEST_LOAD_WH"
-      warehouse_size            = "X-SMALL"
-      warehouse_type            = "STANDARD"
-      auto_resume               = true
-      auto_suspend              = 60
-      initially_suspended       = true
-      min_cluster_count         = 1
-      max_cluster_count         = 1
-      scaling_policy            = "STANDARD"
-      enable_query_acceleration = false
-      comment                   = "Dedicated ingestion warehouse for loading files"
+    "customers_stream" = {
+      name              = "SN_CUSTOMERS_STREAM"
+      database          = "SALES_DB"
+      schema            = "PUBLIC"
+      table             = "CUSTOMERS"
+      append_only       = "true"
+      show_initial_rows = "false"
+      copy_grants       = false
+      comment           = "Append-only stream for customers table"
     }
-    "transform_wh" = {
-      name                      = "SN_TEST_TRANSFORM_WH"
-      warehouse_size            = "MEDIUM"
-      warehouse_type            = "STANDARD"
-      auto_resume               = true
-      auto_suspend              = 300
-      initially_suspended       = true
-      min_cluster_count         = 1
-      max_cluster_count         = 3
-      scaling_policy            = "STANDARD"
-      enable_query_acceleration = true
-      comment                   = "ETL/ELT warehouse for transformations"
+    "products_stream" = {
+      name              = "SN_PRODUCTS_STREAM"
+      database          = "SALES_DB"
+      schema            = "PUBLIC"
+      table             = "PRODUCTS"
+      append_only       = "false"
+      show_initial_rows = "true"
+      copy_grants       = false
+      comment           = "Stream for products table with initial rows"
     }
   }
 }
 
-module "warehouses" {
-  source = "path/to/modules/snowflake-warehouse"
+module "streams" {
+  source = "path/to/modules/snowflake-stream"
 
-  warehouse_configs = local.warehouses
+  stream_configs = local.streams
 }
 ```
 
 ## Examples
 
-- [Basic (Single Warehouse)](examples/basic) - Create a single warehouse
-- [Multiple Warehouses](examples/multiple-warehouses) - Create multiple warehouses
+- [Simple Stream](examples/simple-stream) - Create a single stream
+- [Multiple Streams](examples/multiple-streams) - Create multiple streams
 
 ## Requirements
 
@@ -114,67 +103,42 @@ module "warehouses" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
-| warehouse_configs | Map of configuration objects for Snowflake warehouses | `map(object)` | `{}` | no |
+| stream_configs | Map of configuration objects for Snowflake streams | `map(object)` | `{}` | no |
 
-### warehouse_configs Object Properties
+### stream_configs Object Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| name | string | - | Warehouse identifier (required) |
-| warehouse_size | string | "X-SMALL" | Size of the warehouse |
-| warehouse_type | string | "STANDARD" | Type of warehouse (STANDARD, SNOWPARK-OPTIMIZED) |
-| auto_resume | bool | true | Auto-resume when queries are submitted |
-| auto_suspend | number | 60 | Seconds of inactivity before auto-suspend |
-| initially_suspended | bool | true | Start in suspended state |
-| min_cluster_count | number | 1 | Minimum number of clusters |
-| max_cluster_count | number | 1 | Maximum number of clusters |
-| scaling_policy | string | "STANDARD" | Scaling policy (STANDARD, ECONOMY) |
-| enable_query_acceleration | bool | false | Enable query acceleration |
-| comment | string | null | Description of the warehouse |
-
-### Valid Warehouse Sizes
-
-- X-SMALL (XSMALL)
-- SMALL
-- MEDIUM
-- LARGE
-- X-LARGE (XLARGE)
-- 2X-LARGE (XXLARGE, X2LARGE)
-- 3X-LARGE (XXXLARGE, X3LARGE)
-- 4X-LARGE (X4LARGE)
-- 5X-LARGE (X5LARGE)
-- 6X-LARGE (X6LARGE)
-
-### Valid Warehouse Types
-
-- STANDARD
-- SNOWPARK-OPTIMIZED
-
-### Valid Scaling Policies
-
-- STANDARD
-- ECONOMY
+| name | string | - | Stream identifier (required) |
+| database | string | - | Database where the stream will be created (required) |
+| schema | string | - | Schema where the stream will be created (required) |
+| table | string | - | Source table to monitor (required) |
+| append_only | string | null | Whether this is an append-only stream ("true" or "false") |
+| show_initial_rows | string | null | Whether to include initial rows ("true" or "false") |
+| copy_grants | bool | false | Whether to copy grants from the source |
+| comment | string | null | Description of the stream |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| warehouse_names | Map of warehouse names keyed by identifier |
-| warehouse_fully_qualified_names | Map of fully qualified warehouse names |
-| warehouse_sizes | Map of warehouse sizes |
-| warehouse_states | Map of warehouse states (STARTED or SUSPENDED) |
-| warehouses | All warehouse resources |
+| stream_names | Map of stream names keyed by identifier |
+| stream_fully_qualified_names | Map of fully qualified stream names |
+| stream_databases | Map of stream databases |
+| stream_schemas | Map of stream schemas |
+| stream_tables | Map of source tables |
+| streams | All stream resources |
 
 ## Validation
 
 The module validates inputs and provides descriptive error messages for:
 
-- Empty warehouse name
-- Invalid warehouse size
-- Invalid warehouse type
-- Invalid scaling policy
-- Negative auto_suspend value
-- min_cluster_count exceeding max_cluster_count
+- Empty stream name
+- Empty database name
+- Empty schema name
+- Empty table name
+- Invalid append_only value (must be "true", "false", or null)
+- Invalid show_initial_rows value (must be "true", "false", or null)
 
 ## Testing
 

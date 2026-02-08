@@ -1,7 +1,7 @@
 {
-    "name": "terraform-snowflake-warehouse",
+    "name": "terraform-snowflake-strean",
     "version": "0.0.0",
-    "description": "Terraform module for creating and managing Snowflake warehouses with Semantic Release support.",
+    "description": "Terraform module for creating and managing Snowflake stream with Semantic Release support.",
     "license": "MIT",
     "scripts": {
         "release": "semantic-release"
@@ -20,16 +20,16 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse.git"
+        "url": "git+https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-stream.git"
     },
     "keywords": [
         "terraform",
         "snowflake",
-        "warehouse",
+        "stream",
         "infrastructure-as-code"
     ],
     "bugs": {
-        "url": "https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse/issues"
+        "url": "https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-stream/issues"
     },
-    "homepage": "https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-warehouse#readme"
+    "homepage": "https://github.com/subhamay-bhattacharyya-tf/terraform-snowflake-stream#readme"
 }
