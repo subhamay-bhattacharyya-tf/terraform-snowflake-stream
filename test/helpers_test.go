@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type WarehouseProps struct {
+type StreamProps struct {
 	Name    string
-	Size    string
 	Comment string
+	Mode    string
 }
 
 func openSnowflake(t *testing.T) *sql.DB {
@@ -71,10 +71,32 @@ func openSnowflake(t *testing.T) *sql.DB {
 	return db
 }
 
-func warehouseExists(t *testing.T, db *sql.DB, warehouseName string) bool {
+func setupTestTable(t *testing.T, db *sql.DB, database, schema, tableName string) {
 	t.Helper()
 
-	q := fmt.Sprintf("SHOW WAREHOUSES LIKE '%s';", escapeLike(warehouseName))
+	// Create database if not exists
+	_, err := db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", database))
+	require.NoError(t, err, "Failed to create database")
+
+	// Create schema if not exists
+	_, err = db.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s.%s", database, schema))
+	require.NoError(t, err, "Failed to create schema")
+
+	// Create table
+	_, err = db.Exec(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s.%s.%s (id INT, name VARCHAR(100))", database, schema, tableName))
+	require.NoError(t, err, "Failed to create table")
+}
+
+func cleanupTestTable(t *testing.T, db *sql.DB, database, schema, tableName string) {
+	t.Helper()
+
+	_, _ = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s.%s.%s", database, schema, tableName))
+}
+
+func streamExists(t *testing.T, db *sql.DB, database, schema, streamName string) bool {
+	t.Helper()
+
+	q := fmt.Sprintf("SHOW STREAMS LIKE '%s' IN SCHEMA %s.%s;", escapeLike(streamName), database, schema)
 	rows, err := db.Query(q)
 	require.NoError(t, err)
 	defer func() { _ = rows.Close() }()
@@ -82,13 +104,10 @@ func warehouseExists(t *testing.T, db *sql.DB, warehouseName string) bool {
 	return rows.Next()
 }
 
-func fetchWarehouseProps(t *testing.T, db *sql.DB, warehouseName string) WarehouseProps {
+func fetchStreamProps(t *testing.T, db *sql.DB, database, schema, streamName string) StreamProps {
 	t.Helper()
 
-	// SHOW WAREHOUSES returns columns in a specific order. We need to scan all columns
-	// to get name (col 0), size (col 3), and comment (col 10 in newer versions).
-	// Using a simpler approach: query rows and scan by column name using rows.Columns()
-	q := fmt.Sprintf("SHOW WAREHOUSES LIKE '%s';", escapeLike(warehouseName))
+	q := fmt.Sprintf("SHOW STREAMS LIKE '%s' IN SCHEMA %s.%s;", escapeLike(streamName), database, schema)
 	rows, err := db.Query(q)
 	require.NoError(t, err)
 	defer func() { _ = rows.Close() }()
@@ -96,23 +115,22 @@ func fetchWarehouseProps(t *testing.T, db *sql.DB, warehouseName string) Warehou
 	cols, err := rows.Columns()
 	require.NoError(t, err)
 
-	// Find column indices for name, size, comment
-	nameIdx, sizeIdx, commentIdx := -1, -1, -1
+	// Find column indices for name, comment, mode
+	nameIdx, commentIdx, modeIdx := -1, -1, -1
 	for i, col := range cols {
 		switch col {
 		case "name":
 			nameIdx = i
-		case "size":
-			sizeIdx = i
 		case "comment":
 			commentIdx = i
+		case "mode":
+			modeIdx = i
 		}
 	}
-	require.NotEqual(t, -1, nameIdx, "name column not found in SHOW WAREHOUSES output")
-	require.NotEqual(t, -1, sizeIdx, "size column not found in SHOW WAREHOUSES output")
-	require.NotEqual(t, -1, commentIdx, "comment column not found in SHOW WAREHOUSES output")
+	require.NotEqual(t, -1, nameIdx, "name column not found in SHOW STREAMS output")
+	require.NotEqual(t, -1, commentIdx, "comment column not found in SHOW STREAMS output")
 
-	require.True(t, rows.Next(), "No warehouse found matching %s", warehouseName)
+	require.True(t, rows.Next(), "No stream found matching %s", streamName)
 
 	// Create slice to hold all column values
 	values := make([]interface{}, len(cols))
@@ -138,11 +156,16 @@ func fetchWarehouseProps(t *testing.T, db *sql.DB, warehouseName string) Warehou
 		return fmt.Sprintf("%v", v)
 	}
 
-	return WarehouseProps{
+	props := StreamProps{
 		Name:    getName(values[nameIdx]),
-		Size:    getName(values[sizeIdx]),
 		Comment: getName(values[commentIdx]),
 	}
+
+	if modeIdx != -1 {
+		props.Mode = getName(values[modeIdx])
+	}
+
+	return props
 }
 
 func mustEnv(t *testing.T, key string) string {
