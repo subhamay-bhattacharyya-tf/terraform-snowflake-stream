@@ -33,12 +33,12 @@ variable "stream_configs" {
   }
 
   validation {
-    condition = alltrue([for k, s in var.stream_configs : s.append_only == null || contains(["true", "false"], s.append_only)])
+    condition     = alltrue([for k, s in var.stream_configs : s.append_only == null || contains(["true", "false"], s.append_only)])
     error_message = "append_only must be 'true', 'false', or null."
   }
 
   validation {
-    condition = alltrue([for k, s in var.stream_configs : s.show_initial_rows == null || contains(["true", "false"], s.show_initial_rows)])
+    condition     = alltrue([for k, s in var.stream_configs : s.show_initial_rows == null || contains(["true", "false"], s.show_initial_rows)])
     error_message = "show_initial_rows must be 'true', 'false', or null."
   }
 }
