@@ -1,4 +1,9 @@
-# Changelog
+## [unreleased]
 
-All notable changes to this project will be documented in this file.
+### 🚀 Features
 
+- [**breaking**] Replace snowflake-warehouse module with snowflake-stream module
+
+### 📚 Documentation
+
+- *(readme)* Add custom endpoint badge and improve formatting
